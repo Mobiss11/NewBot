@@ -1,50 +1,53 @@
-# Handlers Documentation
+# Документация по хэндлерам
 
-## start.py — Avatar Selection
+## start.py — Выбор аватара
 
 ### `cmd_start(message, session, state)`
-- **Trigger**: `/start` command
-- **Action**: Creates user if needed, shows inline keyboard with 3 avatars
-- **FSM**: Sets state to `selecting_avatar`
+- **Триггер**: команда `/start`
+- **Действие**: Создаёт пользователя при необходимости, показывает inline-клавиатуру с 3 аватарами
+- **FSM**: Устанавливает состояние `selecting_avatar`
 
 ### `on_avatar_selected(callback, callback_data, session, state)`
-- **Trigger**: `AvatarCallback` in state `selecting_avatar`
-- **Action**: Assigns avatar to user, shows confirmation
-- **FSM**: Sets state to `chatting`
+- **Триггер**: `AvatarCallback` в состоянии `selecting_avatar`
+- **Действие**: Назначает аватара пользователю, показывает подтверждение и reply-клавиатуру с кнопками команд (`chat_keyboard()`)
+- **FSM**: Устанавливает состояние `chatting`
 
-## chat.py — AI Conversation
+## chat.py — Диалог с ИИ
 
 ### `handle_chat_message(message, session, state)`
-- **Trigger**: Any text message in state `chatting`
-- **Action**:
-  1. Saves user message to DB
-  2. Loads short-term history (last 10 messages)
-  3. Loads long-term facts from DB
-  4. Builds system prompt (avatar personality + facts)
-  5. Sends placeholder message ("...")
-  6. Streams LLM response, editing message every ~1 second
-  7. Saves assistant response to DB
-  8. Triggers background fact extraction (every 5 messages)
-- **Error handling**: On LLM failure, edits placeholder to error message
+- **Триггер**: Любое текстовое сообщение в состоянии `chatting`
+- **Фильтрация**: Нажатия кнопок reply-клавиатуры игнорируются — множество `ALL_BUTTONS` отсеивает их в начале хэндлера
+- **Действие**:
+  1. Сохраняет сообщение пользователя в БД
+  2. Загружает краткосрочную историю (последние 10 сообщений)
+  3. Загружает долгосрочные факты из БД
+  4. Формирует системный промпт (личность аватара + факты)
+  5. Отправляет сообщение-заглушку ("...")
+  6. Стримит ответ LLM, редактируя сообщение примерно раз в секунду
+  7. Сохраняет ответ ассистента в БД
+  8. Запускает фоновое извлечение фактов (каждые 5 сообщений)
+- **Обработка ошибок**: При сбое LLM редактирует заглушку, показывая сообщение об ошибке
 
-## commands.py — Utility Commands
+## commands.py — Служебные команды
+
+Каждая команда имеет двойной триггер: слэш-команда и текст reply-кнопки (`F.text == BTN_...`). Константы кнопок определены в `app/keyboards/reply.py`.
 
 ### `cmd_history(message, session)`
-- **Trigger**: `/history`
-- **Action**: Shows last 10 messages from current dialog
-- **Format**: "**You:** message" / "**AvatarName:** message"
+- **Триггер**: `/history` или нажатие кнопки `BTN_HISTORY` ("📜 История")
+- **Действие**: Показывает последние 10 сообщений из текущего диалога
+- **Формат**: "**Ты:** сообщение" / "**ИмяАватара:** сообщение"
 
 ### `cmd_facts(message, session)`
-- **Trigger**: `/facts`
-- **Action**: Shows all long-term facts for current user+avatar pair
-- **Format**: Bullet list of facts
+- **Триггер**: `/facts` или нажатие кнопки `BTN_FACTS` ("🧠 Факты обо мне")
+- **Действие**: Показывает все долгосрочные факты для текущей пары пользователь+аватар
+- **Формат**: Маркированный список фактов
 
 ### `cmd_reset(message, session)`
-- **Trigger**: `/reset`
-- **Action**: Deletes all messages for current user+avatar. Keeps facts.
-- **Response**: Confirmation with count of deleted messages
+- **Триггер**: `/reset` или нажатие кнопки `BTN_RESET` ("🔄 Сбросить диалог")
+- **Действие**: Удаляет все сообщения для текущей пары пользователь+аватар. Факты сохраняются.
+- **Ответ**: Подтверждение с количеством удалённых сообщений
 
 ### `cmd_change_avatar(message, session, state)`
-- **Trigger**: `/change_avatar`
-- **Action**: Shows avatar selection keyboard again
-- **FSM**: Sets state to `selecting_avatar`
+- **Триггер**: `/change_avatar` или нажатие кнопки `BTN_CHANGE` ("👤 Сменить аватара")
+- **Действие**: Снова показывает inline-клавиатуру выбора аватара
+- **FSM**: Устанавливает состояние `selecting_avatar`

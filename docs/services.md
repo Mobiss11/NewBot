@@ -1,52 +1,52 @@
-# Services Documentation
+# Документация сервисов
 
-## user.py — User Management
+## user.py — Управление пользователями
 
 ### `get_or_create_user(session, telegram_id) -> User`
-Finds user by Telegram ID or creates a new one. Idempotent.
+Находит пользователя по Telegram ID или создаёт нового. Идемпотентная операция.
 
 ### `set_user_avatar(session, telegram_id, avatar_id) -> User`
-Assigns an avatar to the user. Updates `current_avatar_id`.
+Назначает аватар пользователю. Обновляет поле `current_avatar_id`.
 
 ### `get_all_avatars(session) -> list[Avatar]`
-Returns all available avatars from DB.
+Возвращает все доступные аватары из базы данных.
 
 ### `get_avatar_by_id(session, avatar_id) -> Avatar | None`
-Returns a single avatar by primary key.
+Возвращает один аватар по первичному ключу.
 
-## llm.py — LLM Integration
+## llm.py — Интеграция с LLM
 
-Uses OpenAI SDK pointed at OpenRouter (`https://openrouter.ai/api/v1`).
+Использует OpenAI SDK, направленный на OpenRouter (`https://openrouter.ai/api/v1`).
 
 ### `stream_chat_response(messages) -> AsyncIterator[str]`
-Sends messages to the LLM and yields text chunks as they arrive.
-Used for streaming responses to Telegram.
+Отправляет сообщения в LLM и возвращает текстовые чанки по мере их поступления.
+Используется для потоковой отправки ответов в Telegram.
 
 ### `extract_facts_from_conversation(conversation, existing_facts) -> list[str]`
-Sends a separate (non-streaming) LLM call with a fact extraction prompt.
-Returns a list of new fact strings parsed from JSON response.
+Выполняет отдельный (не потоковый) вызов LLM с промптом для извлечения фактов.
+Возвращает список новых фактов в виде строк, распарсенных из JSON-ответа.
 
-**Robustness**: Handles markdown code fences in response, invalid JSON,
-and API failures — returns empty list on any error.
+**Надёжность**: Обрабатывает markdown code fences в ответе, невалидный JSON
+и ошибки API — при любой ошибке возвращает пустой список.
 
-## memory.py — Memory System
+## memory.py — Система памяти
 
 ### `save_message(session, user_id, avatar_id, role, content) -> Message`
-Persists a message (user or assistant) to the database.
+Сохраняет сообщение (от пользователя или ассистента) в базу данных.
 
 ### `get_short_term_history(session, user_id, avatar_id, limit) -> list[dict]`
-Returns last N messages as `[{"role": "user"|"assistant", "content": "..."}]`.
-Ordered oldest-first for LLM context.
+Возвращает последние N сообщений в формате `[{"role": "user"|"assistant", "content": "..."}]`.
+Отсортированы от старых к новым для контекста LLM.
 
 ### `get_long_term_facts(session, user_id, avatar_id) -> list[str]`
-Returns all stored facts for a user-avatar pair.
+Возвращает все сохранённые факты для пары пользователь-аватар.
 
 ### `build_system_prompt(avatar, facts) -> str`
-Assembles the full system prompt: avatar's personality + long-term memory block.
+Собирает полный системный промпт: личность аватара + блок долгосрочной памяти.
 
 ### `schedule_fact_extraction(user_id, avatar_id)`
-Fire-and-forget: creates an `asyncio.Task` that checks if fact extraction
-should run (every 5 messages) and executes it if needed.
+Fire-and-forget: создаёт `asyncio.Task`, который проверяет, нужно ли запустить
+извлечение фактов (каждые 5 сообщений), и выполняет его при необходимости.
 
 ### `clear_short_term_history(session, user_id, avatar_id) -> int`
-Deletes all messages for a user-avatar pair. Returns count deleted.
+Удаляет все сообщения для пары пользователь-аватар. Возвращает количество удалённых.

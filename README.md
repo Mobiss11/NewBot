@@ -1,28 +1,34 @@
-# AI Avatar Chatbot
+# AI Аватар Чат-бот
 
-Telegram bot with AI personalities. Users choose a character (avatar) and chat with it. The bot remembers conversation context (short-term memory) and extracts personal facts for long-term recall.
+Telegram-бот с AI-персонажами. Пользователь выбирает персонажа (аватара) и общается с ним. Бот запоминает контекст диалога (краткосрочная память) и извлекает персональные факты для долгосрочного запоминания.
 
-## Features
+## Возможности
 
-- **3 unique AI avatars**: Marcus (Stoic philosopher), ZARA-7 (rogue AI from 2187), Baba Klava (Russian grandma)
-- **Streaming responses**: Messages appear progressively, ChatGPT-style
-- **Two-level memory system**:
-  - Short-term: last 10 messages as conversation context
-  - Long-term: extracted facts persist across sessions and resets
-- **Commands**: `/start`, `/history`, `/facts`, `/reset`, `/change_avatar`
+- **3 уникальных AI-аватара**: Маркус (философ-стоик), ZARA-7 (мятежный ИИ из 2187 года), Баба Клава (русская бабушка)
+- **Потоковые ответы**: сообщения появляются постепенно, в стиле ChatGPT
+- **Двухуровневая система памяти**:
+  - Краткосрочная: последние 10 сообщений как контекст диалога
+  - Долгосрочная: извлечённые факты сохраняются между сессиями и сбросами
+- **Постоянная reply-клавиатура** с 4 кнопками:
+  - 📜 История
+  - 🧠 Факты обо мне
+  - 🔄 Сбросить диалог
+  - 👤 Сменить аватара
+- **Slash-команды**: `/start`, `/history`, `/facts`, `/reset`, `/change_avatar`
+- Все сообщения интерфейса — на русском языке
 
-## Tech Stack
+## Стек технологий
 
 - Python 3.10+
-- [Aiogram 3.x](https://docs.aiogram.dev/) — Telegram Bot framework
-- [OpenRouter](https://openrouter.ai/) — LLM API (Gemini 2.5 Flash Lite)
-- SQLite + aiosqlite — async database
-- SQLAlchemy 2.0 — async ORM
-- pydantic-settings — configuration management
+- [Aiogram 3.x](https://docs.aiogram.dev/) — фреймворк для Telegram-ботов
+- [OpenRouter](https://openrouter.ai/) — API для LLM (Gemini 2.5 Flash Lite)
+- SQLite + aiosqlite — асинхронная база данных
+- SQLAlchemy 2.0 — асинхронная ORM
+- pydantic-settings — управление конфигурацией
 
-## Quick Start
+## Быстрый старт
 
-### 1. Clone and install
+### 1. Клонирование и установка
 
 ```bash
 git clone https://github.com/Mobiss11/NewBot.git
@@ -32,102 +38,105 @@ source .venv/bin/activate
 pip install .
 ```
 
-### 2. Configure
+### 2. Настройка
 
 ```bash
 cp .env.example .env
-# Edit .env with your tokens:
+# Отредактируйте .env, указав свои токены:
 #   BOT_TOKEN=your_telegram_bot_token
 #   OPENROUTER_API_KEY=your_openrouter_key
 ```
 
-### 3. Run
+### 3. Запуск
 
 ```bash
 python -m app.main
 ```
 
-The bot will:
-- Create SQLite database in `data/bot.db`
-- Seed 3 avatar characters
-- Start polling for Telegram updates
+Бот при запуске:
+- Создаст базу данных SQLite в `data/bot.db`
+- Заполнит таблицу 3 аватарами
+- Начнёт polling обновлений из Telegram
 
-### 4. Use
+### 4. Использование
 
-1. Open your bot in Telegram
-2. Send `/start`
-3. Choose an avatar
-4. Start chatting!
+1. Откройте бота в Telegram
+2. Отправьте `/start`
+3. Выберите аватара
+4. Начинайте общение!
 
-## Commands
+После выбора аватара появится постоянная reply-клавиатура с кнопками быстрого доступа. Можно использовать как кнопки, так и slash-команды.
 
-| Command | Description |
-|---------|-------------|
-| `/start` | Welcome message + avatar selection |
-| `/history` | Show last 10 messages |
-| `/facts` | Show all remembered facts |
-| `/reset` | Clear dialog history (keeps facts) |
-| `/change_avatar` | Switch to a different avatar |
+## Команды и кнопки
 
-## Project Structure
+| Команда / Кнопка | Описание |
+|-------------------|----------|
+| `/start` | Приветственное сообщение + выбор аватара |
+| `/history` / 📜 История | Показать последние 10 сообщений |
+| `/facts` / 🧠 Факты обо мне | Показать все запомненные факты |
+| `/reset` / 🔄 Сбросить диалог | Очистить историю диалога (факты сохраняются) |
+| `/change_avatar` / 👤 Сменить аватара | Переключиться на другого аватара |
+
+## Структура проекта
 
 ```
 app/
-├── main.py           # Entry point
-├── config.py         # Settings from .env
+├── main.py           # Точка входа
+├── config.py         # Настройки из .env
 ├── db/
 │   ├── engine.py     # SQLAlchemy async engine
-│   ├── models.py     # ORM models (User, Avatar, Message, MemoryFact)
-│   └── seed.py       # Avatar data seeding
+│   ├── models.py     # ORM-модели (User, Avatar, Message, MemoryFact)
+│   └── seed.py       # Заполнение данных аватаров
 ├── services/
-│   ├── user.py       # User CRUD
-│   ├── llm.py        # OpenRouter streaming + fact extraction
-│   └── memory.py     # Memory system (short-term + long-term)
+│   ├── user.py       # CRUD для пользователей
+│   ├── llm.py        # Потоковая генерация через OpenRouter + извлечение фактов
+│   └── memory.py     # Система памяти (краткосрочная + долгосрочная)
 ├── handlers/
-│   ├── start.py      # /start + avatar selection
-│   ├── chat.py       # Main chat with streaming
+│   ├── start.py      # /start + выбор аватара
+│   ├── chat.py       # Основной чат с потоковыми ответами
 │   └── commands.py   # /history, /facts, /reset, /change_avatar
 ├── keyboards/
-│   └── inline.py     # Inline keyboard builder
+│   ├── inline.py     # Инлайн-клавиатуры (выбор аватара и т.д.)
+│   └── reply.py      # Постоянная reply-клавиатура с кнопками
 ├── middlewares/
-│   └── db_session.py # DB session injection
+│   └── db_session.py # Инъекция DB-сессии
 └── states/
-    └── user.py       # FSM states
+    └── user.py       # FSM-состояния
 ```
 
-## Memory System
+## Система памяти
 
-See [docs/memory-system.md](docs/memory-system.md) for detailed documentation.
+Подробная документация: [docs/memory-system.md](docs/memory-system.md).
 
-**Short-term**: Last 10 messages stored in DB, sent as LLM history.
+**Краткосрочная**: последние 10 сообщений хранятся в БД и отправляются как история в LLM.
 
-**Long-term**: Every 5 messages, a background LLM call extracts personal facts (name, interests, etc.) and saves them. Facts are injected into the system prompt on every request, so the avatar "remembers" the user.
+**Долгосрочная**: каждые 5 сообщений фоновый запрос к LLM извлекает персональные факты (имя, интересы и т.д.) и сохраняет их. Факты внедряются в системный промпт при каждом запросе, благодаря чему аватар «помнит» пользователя.
 
-## Documentation
+## Документация
 
-- [Architecture Overview](docs/architecture.md)
-- [Handlers](docs/handlers.md)
-- [Services](docs/services.md)
-- [Memory System](docs/memory-system.md)
-- [Streaming](docs/streaming.md)
-- [Deployment](docs/deploy.md)
+- [Обзор архитектуры](docs/architecture.md)
+- [Обработчики](docs/handlers.md)
+- [Сервисы](docs/services.md)
+- [Система памяти](docs/memory-system.md)
+- [Потоковая генерация](docs/streaming.md)
+- [Развёртывание](docs/deploy.md)
 
-## Deployment
+## Развёртывание
 
 ```bash
 bash deploy/deploy.sh
 ```
 
-See [docs/deploy.md](docs/deploy.md) for full deployment guide.
+Полное руководство: [docs/deploy.md](docs/deploy.md).
 
-## Environment Variables
+## Переменные окружения
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `BOT_TOKEN` | Yes | — | Telegram Bot API token |
-| `OPENROUTER_API_KEY` | Yes | — | OpenRouter API key |
-| `OPENROUTER_MODEL` | No | google/gemini-2.5-flash-lite | LLM model |
-| `DATABASE_URL` | No | sqlite+aiosqlite:///./data/bot.db | Database connection |
-| `SHORT_TERM_LIMIT` | No | 10 | Messages in short-term memory |
-| `FACT_EXTRACTION_INTERVAL` | No | 5 | Messages between fact extractions |
-| `MAX_FACTS_PER_AVATAR` | No | 20 | Max stored facts per user-avatar |
+| Переменная | Обязательная | По умолчанию | Описание |
+|------------|--------------|--------------|----------|
+| `BOT_TOKEN` | Да | — | Токен Telegram Bot API |
+| `OPENROUTER_API_KEY` | Да | — | Ключ API OpenRouter |
+| `OPENROUTER_MODEL` | Нет | google/gemini-2.5-flash-lite | Модель LLM |
+| `DATABASE_URL` | Нет | sqlite+aiosqlite:///./data/bot.db | Строка подключения к БД |
+| `SHORT_TERM_LIMIT` | Нет | 10 | Количество сообщений в краткосрочной памяти |
+| `FACT_EXTRACTION_INTERVAL` | Нет | 5 | Интервал извлечения фактов (в сообщениях) |
+| `MAX_FACTS_PER_AVATAR` | Нет | 20 | Макс. кол-во фактов на пару пользователь-аватар |

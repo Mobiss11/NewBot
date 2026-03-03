@@ -1,6 +1,6 @@
-# Architecture Overview
+# Обзор архитектуры
 
-## Data Flow
+## Поток данных
 
 ```
 User Message
@@ -42,7 +42,7 @@ User Message
 └─────────────────┘
 ```
 
-## Module Structure
+## Структура модулей
 
 ```
 app/
@@ -61,7 +61,8 @@ app/
 │   ├── chat.py       # Main message handler with streaming
 │   └── commands.py   # /history, /facts, /reset, /change_avatar
 ├── keyboards/
-│   └── inline.py     # Avatar selection keyboard + CallbackData
+│   ├── inline.py     # Avatar selection keyboard + CallbackData
+│   └── reply.py      # Persistent reply keyboard
 ├── middlewares/
 │   └── db_session.py # Inject AsyncSession into every handler
 ├── states/
@@ -70,16 +71,16 @@ app/
     └── text.py       # Text truncation helper
 ```
 
-## Database Schema
+## Схема базы данных
 
-| Table | Columns | Purpose |
-|-------|---------|---------|
-| `users` | id, telegram_id, current_avatar_id, created_at | User profiles |
-| `avatars` | id, name, description, system_prompt | AI character definitions |
-| `messages` | id, user_id, avatar_id, role, content, created_at | Dialog history |
-| `memory_facts` | id, user_id, avatar_id, fact_text, created_at | Long-term extracted facts |
+| Table | Columns | Назначение |
+|-------|---------|------------|
+| `users` | id, telegram_id, current_avatar_id, created_at | Профили пользователей |
+| `avatars` | id, name, description, system_prompt | Определения AI-персонажей |
+| `messages` | id, user_id, avatar_id, role, content, created_at | История диалогов |
+| `memory_facts` | id, user_id, avatar_id, fact_text, created_at | Извлечённые факты долгосрочной памяти |
 
-## FSM States
+## Состояния FSM
 
-1. **selecting_avatar** — User sees inline keyboard, waiting for avatar choice
-2. **chatting** — User sends messages, bot streams AI responses
+1. **selecting_avatar** — Пользователь видит инлайн-клавиатуру и выбирает аватар. Бот ожидает нажатия на кнопку с персонажем.
+2. **chatting** — Пользователь отправляет сообщения, бот стримит ответы от AI. Основной рабочий режим диалога.

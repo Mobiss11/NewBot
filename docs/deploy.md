@@ -1,34 +1,34 @@
-# Deployment Guide
+# Руководство по деплою
 
-## Server Requirements
+## Требования к серверу
 
-- Linux (Ubuntu 22.04+ recommended)
+- Linux (рекомендуется Ubuntu 22.04+)
 - Python 3.10+
-- SSH access
+- Доступ по SSH
 
-## Quick Deploy
+## Быстрый деплой
 
 ```bash
-# From project root on your local machine:
+# Из корня проекта на локальной машине:
 bash deploy/deploy.sh
 ```
 
-The script will:
-1. Sync code via rsync (excluding .env, data/, dot-dirs)
-2. Create Python venv and install dependencies
-3. Set up systemd service
-4. Start the bot
+Скрипт выполнит следующее:
+1. Синхронизирует код через rsync (исключая .env, data/, скрытые директории)
+2. Создаст виртуальное окружение Python и установит зависимости
+3. Настроит systemd-сервис
+4. Запустит бота
 
-## First-Time Server Setup
+## Первоначальная настройка сервера
 
-### 1. Create .env on server
+### 1. Создайте .env на сервере
 
 ```bash
 ssh root@157.22.180.179
 nano /opt/avatar-bot/.env
 ```
 
-Contents:
+Содержимое:
 ```
 BOT_TOKEN=your_bot_token
 OPENROUTER_API_KEY=sk-or-...
@@ -36,41 +36,41 @@ OPENROUTER_MODEL=google/gemini-2.5-flash-lite
 DATABASE_URL=sqlite+aiosqlite:///./data/bot.db
 ```
 
-### 2. Create data directory
+### 2. Создайте директорию для данных
 
 ```bash
 mkdir -p /opt/avatar-bot/data
 ```
 
-### 3. Deploy
+### 3. Запустите деплой
 
 ```bash
 bash deploy/deploy.sh
 ```
 
-## Managing the Bot
+## Управление ботом
 
 ```bash
-# Check status
+# Проверить статус
 ssh root@157.22.180.179 "systemctl status avatar-bot"
 
-# View logs
+# Просмотреть логи
 ssh root@157.22.180.179 "journalctl -u avatar-bot -f"
 
-# Restart
+# Перезапустить
 ssh root@157.22.180.179 "systemctl restart avatar-bot"
 
-# Stop
+# Остановить
 ssh root@157.22.180.179 "systemctl stop avatar-bot"
 ```
 
-## Updating
+## Обновление
 
-Just run `deploy/deploy.sh` again. It syncs code and restarts the service.
-The SQLite database in `data/` is preserved between deploys.
+Просто запустите `deploy/deploy.sh` повторно. Скрипт синхронизирует код и перезапустит сервис.
+База данных SQLite в директории `data/` сохраняется между деплоями.
 
-## Rollback
+## Откат
 
-The deploy script uses rsync with `--delete`, so the server always mirrors
-the local codebase. To rollback, checkout the previous git commit locally
-and re-run `deploy/deploy.sh`.
+Скрипт деплоя использует rsync с флагом `--delete`, поэтому сервер всегда
+зеркалирует локальную кодовую базу. Для отката переключитесь на предыдущий
+коммит в git локально и повторно запустите `deploy/deploy.sh`.

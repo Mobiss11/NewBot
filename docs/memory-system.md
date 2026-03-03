@@ -1,41 +1,41 @@
-# Memory System
+# Система памяти
 
-The memory system is the core differentiating feature of this bot.
-It has two levels that work together to create a persistent, personalized experience.
+Система памяти — ключевая функция, отличающая этого бота.
+Она состоит из двух уровней, которые работают вместе для создания персонализированного опыта с сохранением контекста.
 
-## Short-Term Memory (Dialog Memory)
+## Краткосрочная память (память диалога)
 
-**Purpose**: Maintain context within the current conversation.
+**Назначение**: поддержание контекста в рамках текущего разговора.
 
-**How it works**:
-1. Every user message and assistant response is saved to the `messages` table
-2. When building LLM context, the last 10 messages are loaded (configurable via `SHORT_TERM_LIMIT`)
-3. Messages are ordered oldest-first and included as conversation history
+**Как это работает**:
+1. Каждое сообщение пользователя и ответ ассистента сохраняются в таблицу `messages`
+2. При формировании контекста для LLM загружаются последние 10 сообщений (настраивается через `SHORT_TERM_LIMIT`)
+3. Сообщения упорядочиваются от старых к новым и включаются как история разговора
 
-**Lifecycle**:
-- Created: On every message exchange
-- Cleared: By `/reset` command
-- Persists: Between sessions (survives bot restart)
+**Жизненный цикл**:
+- Создание: при каждом обмене сообщениями
+- Очистка: командой `/reset` или кнопкой «🔄 Сбросить диалог»
+- Сохранение: между сессиями (переживает перезапуск бота)
 
-## Long-Term Memory (Fact Memory)
+## Долгосрочная память (память фактов)
 
-**Purpose**: Remember specific facts about the user across conversations and resets.
+**Назначение**: запоминание конкретных фактов о пользователе между разговорами и сбросами.
 
-**How it works**:
+**Как это работает**:
 
-### Extraction Trigger
-After saving each assistant response, `schedule_fact_extraction()` fires.
-It checks if the total message count for this (user, avatar) pair is a multiple
-of `FACT_EXTRACTION_INTERVAL` (default: 5). If yes, extraction runs.
+### Триггер извлечения
+После сохранения каждого ответа ассистента срабатывает `schedule_fact_extraction()`.
+Функция проверяет, кратно ли общее количество сообщений для данной пары (пользователь, аватар)
+значению `FACT_EXTRACTION_INTERVAL` (по умолчанию: 5). Если да — запускается извлечение.
 
-### Extraction Process
-1. Load the last 10 messages as conversation context
-2. Load existing facts to avoid duplicates
-3. Send a special prompt to the LLM asking it to extract new facts
-4. Parse the JSON array response
-5. Save new facts to `memory_facts` table
+### Процесс извлечения
+1. Загружаются последние 10 сообщений как контекст разговора
+2. Загружаются существующие факты для предотвращения дублирования
+3. Отправляется специальный промпт в LLM с запросом на извлечение новых фактов
+4. Парсится ответ в формате JSON-массива
+5. Новые факты сохраняются в таблицу `memory_facts`
 
-### Extraction Prompt
+### Промпт для извлечения
 ```
 You are a memory extraction system. Analyze the conversation below
 and extract concrete, personal facts about the user.
@@ -48,8 +48,8 @@ Facts should be:
 Return ONLY a valid JSON array of strings. Return [] if no new facts.
 ```
 
-### Injection into Context
-On every LLM call, facts are appended to the system prompt:
+### Внедрение в контекст
+При каждом вызове LLM факты добавляются в системный промпт:
 ```
 [LONG-TERM MEMORY — things you remember about this person]
 - User's name is Alex
@@ -58,13 +58,13 @@ On every LLM call, facts are appended to the system prompt:
 Use these facts naturally in conversation.
 ```
 
-### Safety Limits
-- Maximum 20 facts per (user, avatar) pair
-- Oldest facts are trimmed when limit is exceeded
-- JSON parsing failures are silently logged and skipped
-- LLM API failures don't affect the main conversation
+### Ограничения безопасности
+- Максимум 20 фактов на пару (пользователь, аватар)
+- При превышении лимита самые старые факты удаляются
+- Ошибки парсинга JSON логируются и пропускаются без влияния на работу
+- Сбои API LLM не влияют на основной разговор
 
-## How They Work Together
+## Как уровни работают вместе
 
 ```
 System Prompt:
@@ -79,5 +79,5 @@ System Prompt:
 └─────────────────────────────┘
 ```
 
-The LLM sees the full context: who it is (avatar), what it remembers (facts),
-what was recently discussed (history), and what the user just said.
+LLM видит полный контекст: кем он является (аватар), что помнит (факты),
+что обсуждалось недавно (история) и что пользователь только что написал.

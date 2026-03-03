@@ -1,42 +1,42 @@
-# Streaming Implementation
+# Реализация стриминга
 
-## Overview
+## Обзор
 
-The bot streams LLM responses to Telegram by repeatedly editing a single message
-as new chunks arrive. This creates a "typing" effect similar to ChatGPT.
+Бот стримит ответы LLM в Telegram, многократно редактируя одно сообщение
+по мере поступления новых чанков. Это создаёт эффект "печатания", аналогичный ChatGPT.
 
-## How It Works
+## Как это работает
 
-1. Bot sends a placeholder message ("...")
-2. LLM response arrives as an async stream of text chunks
-3. Chunks are accumulated into `full_text`
-4. Every ~1 second, the message is edited with the current `full_text + " ▌"` (cursor)
-5. When streaming completes, final edit removes the cursor
+1. Бот отправляет сообщение-заглушку ("...")
+2. Ответ LLM приходит в виде асинхронного потока текстовых чанков
+3. Чанки накапливаются в `full_text`
+4. Примерно раз в секунду сообщение редактируется текущим содержимым `full_text + " ▌"` (курсор)
+5. По завершении стриминга финальное редактирование убирает курсор
 
-## Key Design Decisions
+## Ключевые проектные решения
 
-### No parse_mode During Streaming
-Telegram's Markdown/HTML parser requires complete, valid markup.
-Mid-stream text often has unclosed formatting (e.g., `**bold` without closing `**`).
-Sending partial Markdown would cause `TelegramBadRequest` errors.
-Therefore, all intermediate edits use plain text (no `parse_mode`).
+### Отсутствие parse_mode во время стриминга
+Парсер Markdown/HTML в Telegram требует полной и валидной разметки.
+Текст в процессе стриминга часто содержит незакрытое форматирование (например, `**bold` без закрывающего `**`).
+Отправка частичного Markdown приводила бы к ошибкам `TelegramBadRequest`.
+Поэтому все промежуточные редактирования используют простой текст (без `parse_mode`).
 
-### Rate Limiting (1 second interval)
-Telegram's Bot API has rate limits:
-- ~30 messages per second per chat
-- `editMessageText` with identical text returns "message is not modified"
+### Ограничение частоты (интервал 1 секунда)
+Bot API Telegram имеет ограничения по частоте запросов:
+- ~30 сообщений в секунду на чат
+- `editMessageText` с идентичным текстом возвращает ошибку "message is not modified"
 
-Editing every 1 second is a safe balance between responsiveness and rate limits.
-Configured via `STREAM_EDIT_INTERVAL` in settings.
+Редактирование раз в 1 секунду — безопасный баланс между отзывчивостью и лимитами.
+Настраивается через `STREAM_EDIT_INTERVAL` в settings.
 
-### Error Handling
-- `TelegramBadRequest` on edit: caught silently (message unchanged or format error)
-- LLM API failure: placeholder is edited to a user-friendly error message
-- Empty response: shows "I couldn't generate a response"
+### Обработка ошибок
+- `TelegramBadRequest` при редактировании: перехватывается без действий (сообщение не изменилось или ошибка формата)
+- Сбой API LLM: заглушка редактируется на понятное пользователю сообщение об ошибке
+- Пустой ответ: отображается "I couldn't generate a response"
 
-## Configuration
+## Конфигурация
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `STREAM_EDIT_INTERVAL` | 1.0 | Seconds between message edits |
-| `OPENROUTER_MODEL` | google/gemini-2.5-flash-lite | Model used for streaming |
+| Параметр | По умолчанию | Описание |
+|----------|--------------|----------|
+| `STREAM_EDIT_INTERVAL` | 1.0 | Секунды между редактированиями сообщения |
+| `OPENROUTER_MODEL` | google/gemini-2.5-flash-lite | Модель, используемая для стриминга |
