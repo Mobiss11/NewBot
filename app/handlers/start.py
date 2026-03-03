@@ -5,16 +5,17 @@ from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.keyboards.inline import AvatarCallback, avatar_selection_keyboard
+from app.keyboards.reply import chat_keyboard, remove_keyboard
 from app.services.user import get_all_avatars, get_avatar_by_id, get_or_create_user, set_user_avatar
 from app.states.user import UserState
 
 router = Router()
 
 WELCOME_TEXT = (
-    "Welcome! I'm a bot with AI personalities.\n\n"
-    "Choose your companion — each has a unique character "
-    "and will remember things about you across conversations.\n\n"
-    "Pick one:"
+    "Привет! Я бот с ИИ-персонажами.\n\n"
+    "Выбери себе собеседника — у каждого свой характер, "
+    "и он будет запоминать факты о тебе между диалогами.\n\n"
+    "Выбирай:"
 )
 
 
@@ -26,6 +27,10 @@ async def cmd_start(message: Message, session: AsyncSession, state: FSMContext) 
 
     await message.answer(
         WELCOME_TEXT,
+        reply_markup=remove_keyboard(),
+    )
+    await message.answer(
+        "Нажми на персонажа:",
         reply_markup=avatar_selection_keyboard(avatars),
     )
     await state.set_state(UserState.selecting_avatar)
@@ -41,17 +46,21 @@ async def on_avatar_selected(
     """Handle avatar selection, switch to chatting state."""
     avatar = await get_avatar_by_id(session, callback_data.avatar_id)
     if avatar is None:
-        await callback.answer("Avatar not found, try again.")
+        await callback.answer("Аватар не найден, попробуй ещё раз.")
         return
 
     await set_user_avatar(session, callback.from_user.id, avatar.id)
     await state.set_state(UserState.chatting)
 
     await callback.message.edit_text(
-        f"You chose **{avatar.name}**!\n"
-        f"_{avatar.description}_\n\n"
-        "Send me a message to start chatting.\n"
-        "Commands: /history /facts /reset /change_avatar",
+        f"✅ Ты выбрал(а) **{avatar.name}**!\n"
+        f"_{avatar.description}_",
         parse_mode="Markdown",
+    )
+
+    # Show reply keyboard with action buttons
+    await callback.message.answer(
+        "Напиши мне что-нибудь, чтобы начать общение 👇",
+        reply_markup=chat_keyboard(),
     )
     await callback.answer()

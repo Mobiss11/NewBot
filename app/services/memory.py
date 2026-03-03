@@ -42,7 +42,7 @@ async def get_short_term_history(
     stmt = (
         select(Message)
         .where(Message.user_id == user_id, Message.avatar_id == avatar_id)
-        .order_by(Message.created_at.desc())
+        .order_by(Message.id.desc())
         .limit(limit)
     )
     result = await session.execute(stmt)

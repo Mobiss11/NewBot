@@ -8,6 +8,7 @@ from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.keyboards.reply import ALL_BUTTONS
 from app.services.llm import stream_chat_response
 from app.services.memory import (
     build_system_prompt,
@@ -29,10 +30,14 @@ async def handle_chat_message(
     state: FSMContext,
 ) -> None:
     """Process a user message: build context, stream LLM response, save to DB."""
+    # Skip button presses — they're handled by commands router
+    if message.text in ALL_BUTTONS:
+        return
+
     user = await get_or_create_user(session, message.from_user.id)
 
     if not user.current_avatar_id or not user.current_avatar:
-        await message.answer("Please select an avatar first: /start")
+        await message.answer("Сначала выбери аватара: /start")
         return
 
     avatar = user.current_avatar
@@ -75,14 +80,14 @@ async def handle_chat_message(
             except TelegramBadRequest:
                 pass
         else:
-            await bot_msg.edit_text("I couldn't generate a response. Please try again.")
+            await bot_msg.edit_text("Не удалось сгенерировать ответ. Попробуй ещё раз.")
             return
 
     except Exception as exc:
         logger.error(f"LLM streaming failed: {exc}")
         try:
             await bot_msg.edit_text(
-                "Sorry, the AI service is temporarily unavailable. Please try again later."
+                "Извини, ИИ-сервис временно недоступен. Попробуй чуть позже."
             )
         except TelegramBadRequest:
             pass
