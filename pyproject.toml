@@ -1,0 +1,23 @@
+[project]
+name = "avatar-bot"
+version = "0.1.0"
+description = "Telegram chatbot with AI avatars and two-level memory system"
+requires-python = ">=3.10"
+dependencies = [
+    "aiogram>=3.15,<4.0",
+    "openai>=1.50",
+    "sqlalchemy[asyncio]>=2.0",
+    "aiosqlite>=0.20",
+    "pydantic-settings>=2.0",
+    "loguru>=0.7",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+]

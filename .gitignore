@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Database
+data/
+*.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Tooling configs (not project code)
+.claude/
+.beads/
+.serena/
+.agents/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# MCP / Claude Code setup
+setup-mcp.sh
+skills-lock.json
+AGENTS.md
+
+# Plan files (internal)
+docs/plans/
