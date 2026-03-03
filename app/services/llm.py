@@ -31,19 +31,34 @@ async def extract_facts_from_conversation(
     existing_facts: list[str],
 ) -> list[str]:
     """Ask LLM to extract new facts about the user from recent conversation."""
-    existing_block = "\n".join(f"- {f}" for f in existing_facts) if existing_facts else "None yet."
+    existing_block = "\n".join(f"- {f}" for f in existing_facts) if existing_facts else "Пока фактов нет."
     conv_block = "\n".join(f"{m['role']}: {m['content']}" for m in conversation)
 
     extraction_prompt = (
-        "You are a memory extraction system. Analyze the conversation below and extract "
-        "concrete, personal facts about the user. Facts should be:\n"
-        "- Specific and factual (name, age, city, job, hobbies, preferences, relationships)\n"
-        "- Expressed as short declarative sentences\n"
-        "- Only NEW information not already in the existing facts list\n\n"
-        f"Existing facts:\n{existing_block}\n\n"
-        f"Recent conversation:\n{conv_block}\n\n"
-        "Return ONLY a valid JSON array of strings. Return [] if no new facts.\n"
-        'Example: ["User\'s name is Alex", "User works as a developer"]'
+        "Ты — система извлечения фактов о пользователе из диалога. "
+        "Будь МАКСИМАЛЬНО внимательным — извлекай ВСЁ, что пользователь (роль 'user') "
+        "упоминает о себе, даже косвенно.\n\n"
+        "Какие факты извлекать:\n"
+        "- Имя, возраст, пол, город, страна\n"
+        "- Работа, профессия, учёба\n"
+        "- Хобби, увлечения, интересы\n"
+        "- Предпочтения, вкусы (еда, музыка, фильмы, книги)\n"
+        "- Отношения, семья, друзья, питомцы\n"
+        "- Настроение, эмоции, проблемы, переживания\n"
+        "- Планы, мечты, цели\n"
+        "- Мнения, убеждения, взгляды\n"
+        "- Любые другие персональные детали\n\n"
+        "Правила:\n"
+        "- Записывай как короткие утвердительные предложения на русском\n"
+        "- Извлекай ТОЛЬКО новые факты, которых нет в существующем списке\n"
+        "- Факты ТОЛЬКО о пользователе, НЕ о боте/ассистенте\n"
+        "- Лучше извлечь лишний факт, чем пропустить важный\n\n"
+        f"Существующие факты:\n{existing_block}\n\n"
+        f"Диалог:\n{conv_block}\n\n"
+        "Верни ТОЛЬКО JSON-массив строк. Пример: "
+        '[\"Пользователя зовут Саша\", \"Любит кофе\", \"Работает в IT\"]\n'
+        "Если фактов нет — верни []\n"
+        "Без пояснений, без markdown — ТОЛЬКО JSON."
     )
 
     try:
@@ -52,6 +67,7 @@ async def extract_facts_from_conversation(
             messages=[{"role": "user", "content": extraction_prompt}],
         )
         raw = response.choices[0].message.content or "[]"
+        logger.debug(f"Fact extraction raw LLM response: {raw!r}")
 
         # Try to extract JSON array from the response
         raw = raw.strip()
@@ -61,12 +77,22 @@ async def extract_facts_from_conversation(
             raw = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
             raw = raw.strip()
 
+        # Try to find JSON array if LLM wrapped it in text
+        if not raw.startswith("["):
+            start = raw.find("[")
+            end = raw.rfind("]")
+            if start != -1 and end != -1:
+                raw = raw[start : end + 1]
+
         facts = json.loads(raw)
         if isinstance(facts, list):
-            return [str(f) for f in facts if isinstance(f, str) and f.strip()]
+            result = [str(f) for f in facts if f and str(f).strip()]
+            logger.debug(f"Parsed {len(result)} facts from response")
+            return result
+        logger.warning(f"LLM returned non-list type: {type(facts)}")
         return []
     except (json.JSONDecodeError, KeyError, IndexError) as exc:
-        logger.warning(f"Failed to parse facts from LLM response: {exc}")
+        logger.warning(f"Failed to parse facts from LLM response: {exc}, raw={raw!r}")
         return []
     except Exception as exc:
         logger.error(f"Fact extraction LLM call failed: {exc}")

@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./data/bot.db"
 
     short_term_limit: int = 10
-    fact_extraction_interval: int = 5
+    fact_extraction_interval: int = 4
     max_facts_per_avatar: int = 20
 
     stream_edit_interval: float = 1.0

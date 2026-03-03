@@ -118,6 +118,9 @@ async def maybe_extract_facts(
             new_facts = await extract_facts_from_conversation(history, existing_facts)
 
             if not new_facts:
+                logger.info(
+                    f"No new facts extracted for user={user_id}, avatar={avatar_id}"
+                )
                 return
 
             for fact_text in new_facts:
