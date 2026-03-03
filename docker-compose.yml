@@ -1,0 +1,13 @@
+services:
+  bot:
+    build: .
+    container_name: avatar-bot
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - bot-data:/app/data
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  bot-data:

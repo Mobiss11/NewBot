@@ -18,23 +18,14 @@ rsync -avz --delete \
     --exclude '*.db' \
     ./ "$SERVER:$REMOTE_DIR/"
 
-echo "==> Installing dependencies on server..."
+echo "==> Building and starting Docker container..."
 ssh "$SERVER" "
     cd $REMOTE_DIR
-    mkdir -p data
-    python3 -m venv .venv 2>/dev/null || true
-    .venv/bin/pip install --upgrade pip -q
-    .venv/bin/pip install . -q
-"
-
-echo "==> Setting up systemd service..."
-ssh "$SERVER" "
-    cp $REMOTE_DIR/deploy/avatar-bot.service /etc/systemd/system/avatar-bot.service
-    systemctl daemon-reload
-    systemctl enable avatar-bot
-    systemctl restart avatar-bot
-    sleep 2
-    systemctl status avatar-bot --no-pager || true
+    docker compose up -d --build
+    sleep 3
+    docker compose ps
+    echo '--- Recent logs ---'
+    docker compose logs --tail=10
 "
 
 echo "==> Deploy complete!"
